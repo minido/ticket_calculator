@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<title>チケット集計</title>
+</head>
+<body>
+
+<form name="order" onreset="resetAll();">
+<div id="item_list"></div>
+<input type="reset">
+</form>
+
+<script>
+  // -----------------------------------------------
+  // 商品リスト
+  // -----------------------------------------------
+  const items = [ {name:"やきそば", price:250},
+                  {name:"おにぎり(ツナマヨ)", price:100},
+                  {name:"おにぎり(こんぶ)", price:100},
+                  {name:"おにぎり(シャケ)", price:100},
+                  {name:"おもち(あん)", price:300},
+                  {name:"おもち(きなこ)", price:300},
+                  {name:"たこやき", price:250},
+                  {name:"からあげ", price:150},
+                  {name:"お茶", price:100},
+                  {name:"ラムネ", price:100},
+                  {name:"りんごジュース", price:100},
+                  {name:"カルピス", price:100} ];
+  // -----------------------------------------------
+  
+  // テーブル出力
+  function makeTable() {
+    var table;
+    var tr;
+    var td0, td1, td2, td3;
+    var inputQuantity;
+    var minusButton, plusButton;
+    
+    table = document.createElement("table");
+    table.setAttribute("border", "1");
+    table.setAttribute("style", "border-collapse: collapse;");
+
+    // タイトル行
+    tr = table.insertRow(-1);
+    tr.setAttribute("style", "font-size: 0.6em; white-space: nowrap;");
+
+    td0 = tr.insertCell(-1);
+    td0.outerHTML = "<th>品名</th>";
+    td1 = tr.insertCell(-1);
+    td1.outerHTML = "<th>単価</th>";
+    td2 = tr.insertCell(-1);
+    td2.outerHTML = "<th>数量</th>";
+    td3 = tr.insertCell(-1);
+    td3.outerHTML = "<th>金額</th>";
+    
+    // 項目分の行を追加
+    for (var i in items) {
+      tr = table.insertRow(-1);
+      if (i%2 == 1) {
+        tr.setAttribute("style", "background-color: #eee;");    
+      }
+      // 品名
+      td0 = tr.insertCell(-1);
+      td0.innerHTML = items[i].name;
+      td0.setAttribute("style", "font-size: .8em; white-space: nowrap;");
+      // 単価
+      td1 = tr.insertCell(-1);
+      td1.innerHTML = items[i].price;
+      td1.setAttribute("id", "price"+i);
+      td1.setAttribute("style", "font-size: .8em;");
+      // 数量入力
+      td2 = tr.insertCell(-1);
+      td2.setAttribute("style", "white-space: nowrap;");
+      minusButton = document.createElement("input");
+      minusButton.setAttribute("type", "button");
+      minusButton.setAttribute("value", "-");
+      minusButton.setAttribute("onclick", "return onClickPlusMinus(" + i + ", -1);");
+      td2.appendChild(minusButton);
+      inputQuantity = document.createElement("input");
+      inputQuantity.setAttribute("type", "number");
+      inputQuantity.setAttribute("min", 0);
+      inputQuantity.setAttribute("max", 99);
+      inputQuantity.setAttribute("id", "quantity" + i );
+      inputQuantity.setAttribute("name", "quantity");
+      inputQuantity.setAttribute("style", "font-size: 16px; text-align: right;" );
+      inputQuantity.setAttribute("onkeydown", "return onKeyDownQuantity(" + i + ");");
+      inputQuantity.setAttribute("oninput", "return updateSum();");
+      td2.appendChild(inputQuantity);
+      plusButton = document.createElement("input");
+      plusButton.setAttribute("type", "button");
+      plusButton.setAttribute("value", "+");
+      plusButton.setAttribute("onclick", "return onClickPlusMinus(" + i + ", 1);");
+      td2.appendChild(plusButton);
+      // 合計金額
+      td3 = tr.insertCell(-1);
+      td3.innerHTML = "0";
+      td3.setAttribute("id", "sum" + i );
+      td3.setAttribute("style", "text-align: right;");
+    }
+
+    // 合計行
+    tr = table.insertRow(-1);
+    tr.setAttribute("style", "font-weight: bold");
+    td0 = tr.insertCell(-1);
+    td0.innerHTML = "合計";
+
+    td1 = tr.insertCell(-1);
+    td1.innerHTML = "";
+
+    td2 = tr.insertCell(-1);
+    td2.innerHTML = "0";
+    td2.setAttribute("id", "all_quantity");
+    td2.setAttribute("style", "text-align: right;");
+
+    td3 = tr.insertCell(-1);
+    td3.innerHTML = "0";
+    td3.setAttribute("id", "all_sum");
+    td3.setAttribute("style", "width: 4em; text-align: right;");
+   
+    document.getElementById("item_list").appendChild(table);
+  }
+  
+  // 数値入力キー押下処理
+  function onKeyDownQuantity(idx) {
+    if (window.event.keyCode == 13){
+      // Enterキーが押下されたら次の入力にフォーカスを移動させる
+      document.order.quantity[idx + 1].focus(); 
+      return false ;
+    }
+    return true ;
+  }
+
+  // +,- ボタン処理
+  function onClickPlusMinus(idx, diff) {
+    var val = parseInt(document.order.quantity[idx].value);
+    if (isNaN(val)) {
+      val = 0;
+    }
+    val += parseInt(diff);
+    if (val < 0) {
+      val = 0;
+    }
+    document.order.quantity[idx].value = val;
+    updateSum();
+  }
+
+  // 合計更新
+  function updateSum() {
+    var allQuantity = 0;
+    var allSum = 0;
+    var quantity;
+    for (var i in items) {
+      quantity = parseInt(document.order.quantity[i].value);
+      if (isNaN(quantity)) {
+        quantity = 0;
+      }
+      document.getElementById("sum" + i).innerHTML=items[i].price * quantity;
+      allQuantity += quantity; 
+      allSum += quantity*items[i].price; 
+    }
+    document.getElementById("all_quantity").innerHTML = allQuantity;
+    document.getElementById("all_sum").innerHTML = allSum;
+  }
+
+  // リセット処理
+  function resetAll() {
+    for (var i in items) {
+      document.getElementById("sum" + i).innerHTML = 0;
+    }
+    document.getElementById("all_quantity").innerHTML = 0;
+    document.getElementById("all_sum").innerHTML = 0;
+  }
+  
+  makeTable();
+</script>
+</body>
+</html>
